@@ -23,7 +23,7 @@ await Promise.all(REPOS.map(async repo => {
             return;
         }
 
-        console.info(`Pull request ${pr.url} requests reviews from ${pr.getReviewerUsernames().join(', ')}.`);
+        console.info(`Pull request ${pr.url} requests reviews from ${pr.reviewerUsernames.join(', ')}.`);
         prsAwaitingReview.add(pr);
     });
 }));
@@ -43,8 +43,8 @@ if (prsAwaitingReview.size == 0) {
 }
 
 const message = 'Pull requests are awaiting review\n\n' + [...prsAwaitingReview].map(pr => {
-    const submitter = getSlackUsername(pr.getSubmitterUsername());
-    const reviewers = pr.getReviewerUsernames().map(getSlackUsername);
+    const submitter = getSlackUsername(pr.submitterUsername);
+    const reviewers = pr.reviewerUsernames.map(getSlackUsername);
     const title = pr.title;
     const url = pr.url;
 

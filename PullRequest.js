@@ -4,23 +4,16 @@ import fetch from "node-fetch";
 
 export default class PullRequest {
     constructor(data) {
-        Object.assign(this, checkNotNull(data));
+        this._data = {...checkNotNull(data)};
 
-
-        checkNotEmpty(this.url);
-        checkNotEmpty(this.user?.login);
-        checkNotEmpty(this.title);
-        checkNotEmpty(this.state);
-        checkNotNull(this.draft);
-        checkNotNull(this.requested_reviewers);
-    }
-
-    getSubmitterUsername() {
-        return this.user.login;
-    }
-
-    getReviewerUsernames() {
-        return this.requested_reviewers.map(reviewer => reviewer.login);
+        this.url = checkNotEmpty(data?._links?.html?.href);
+        this.submitter = checkNotEmpty(data.user);
+        this.submitterUsername = checkNotEmpty(this.submitter?.login);
+        this.title = checkNotEmpty(data.title);
+        this.state = checkNotEmpty(data.state);
+        this.draft = checkNotNull(data.draft);
+        this.reviewers = checkNotNull(data.requested_reviewers);
+        this.reviewerUsernames = this.reviewers.map(reviewer => reviewer.login);
     }
 
     isOpenForReview() {
@@ -28,7 +21,7 @@ export default class PullRequest {
             return false;
         } else if (this.draft) {
             return false;
-        } else if (this.requested_reviewers.length <= 0) {
+        } else if (this.reviewers.length <= 0) {
             return false;
         }
 
@@ -36,7 +29,6 @@ export default class PullRequest {
     }
 
     requestsReviewFromOneOfUsers(users) {
-        return this.getReviewerUsernames()
-            .some(reviewer => users.includes(reviewer));
+        return this.reviewerUsernames.some(reviewer => users.includes(reviewer));
     }
 }
