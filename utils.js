@@ -70,3 +70,5 @@ export const fetchAllPages = async (baseUrl, fetchProperties) => {
 
 	return results;
 }
+
+export const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));

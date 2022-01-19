@@ -38,9 +38,11 @@ export default class PullRequest {
 
     async getStatusChecks() {
         if (!this.statusUrl) {
+            console.warn(`No status checks endpoint for pull request ${this.url}.`);
             return [];
         }
 
+        console.log(`Fetching status checks for pull request ${this.url}...`);
         const statusChecks = await fetch(this.statusUrl, {
             headers: BASE_HEADERS
         }).then(httpCheckParse);

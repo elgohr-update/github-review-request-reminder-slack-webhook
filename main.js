@@ -1,7 +1,7 @@
 import ConsoleStamp from 'console-stamp';
 ConsoleStamp(console);
 
-import { checkHttpStatus, checkNotEmpty, httpCheckParse } from "./utils.js";
+import { checkHttpStatus, checkNotEmpty, httpCheckParse, sleep } from "./utils.js";
 import fetch from "node-fetch";
 import Repository from "./Repository.js";
 import { GITHUB_USERNAMES, SLACK_WEBHOOK_URL, USERNAME_MAPPING } from "./constants.js";
@@ -12,7 +12,7 @@ const REPOS = process.env.REPOS?.startsWith('ALL:')
 
 const prsAwaitingReview = new Set();
 
-await Promise.all(REPOS.map(async repo => {
+for (const repo of REPOS) {
     const prs = await repo.getPullRequests();
     console.info(`${repo.organisation}/${repo.repoName} has ${prs.length} open pull requests.`);
     
@@ -28,7 +28,9 @@ await Promise.all(REPOS.map(async repo => {
         console.info(`Pull request ${pr.url} requests reviews from ${pr.reviewerUsernames.join(', ')}.`);
         prsAwaitingReview.add(pr);
     });
-}));
+
+    await sleep(100); // So Github continues to like me
+}
 
 const getSlackUsername = githubUsername => {
     const slackUsername = USERNAME_MAPPING?.[githubUsername];
@@ -61,6 +63,8 @@ const message = 'Pull requests are awaiting review\n\n' + (await Promise.all([..
 
         return ` [:x: ${nStatusChecksPassed}/${nStatusChecks} status checks passed]`;
     })();
+
+    await sleep(100); // Potentially getting status checks for a lot of PRs
 
     return `:pullrequest: "${title}" (by ${submitter}) requires review from ${reviewers.join(', ')}: ${url}${statusChecksMessage}`;
 }))).map(x => `- ${x}`).join('\n');
