@@ -11,6 +11,7 @@ export default class PullRequest {
         checkNotEmpty(this.user?.login);
         checkNotEmpty(this.title);
         checkNotEmpty(this.state);
+        checkNotNull(this.draft);
         checkNotNull(this.requested_reviewers);
     }
 
@@ -24,6 +25,8 @@ export default class PullRequest {
 
     isOpenForReview() {
         if (this.state != 'open') {
+            return false;
+        } else if (this.draft) {
             return false;
         } else if (this.requested_reviewers.length <= 0) {
             return false;

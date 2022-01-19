@@ -51,7 +51,7 @@ const message = 'Pull requests are awaiting review\n\n' + [...prsAwaitingReview]
     return `:pullrequest: "${title}" submitted by ${submitter} requires review from ${reviewers.join(', ')}: ${url}`;
 }).map(x => `- ${x}`).join('\n');
 
-console.info('Calling Slack webhook...');
+console.info('Calling Slack webhook...', message);
 console.log(await fetch(SLACK_WEBHOOK_URL, {
     method: 'POST',
     body: JSON.stringify({
