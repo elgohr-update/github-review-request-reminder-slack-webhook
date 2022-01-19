@@ -1,3 +1,5 @@
+import fetch from "node-fetch";
+
 export const checkHttpStatus = res => {
 	if ([200, 201, 204].includes(res.status)) {
 		return res;
@@ -45,4 +47,26 @@ export const tryParseInt = x => {
 	} catch {
 		return x;
 	}
+}
+
+export const fetchAllPages = async (baseUrl, fetchProperties) => {
+	const perPage = 100;
+	const results = [];
+
+	for (let iPage = 1;; iPage++) {
+		const url = `${baseUrl}?per_page=${perPage}&page=${iPage}`;
+		const response = await fetch(url, fetchProperties).then(httpCheckParse);
+
+		if (response.length === 0) {
+			console.debug(`${url} returned ${response.length} results. Assuming end reached.`);
+			break;
+		}
+
+		console.debug(`${url} returned ${response.length} results. Will be appended to current set of ${results.length} results.`);
+		response.forEach(item => results.push(item));
+	}
+
+	console.debug(`${baseUrl} returned a total of ${results.length} results.`);
+
+	return results;
 }

@@ -1,4 +1,4 @@
-import {checkNotEmpty, httpCheckParse} from "./utils.js";
+import {checkNotEmpty, fetchAllPages, httpCheckParse} from "./utils.js";
 import {GITHUB_API_BASE_URL, BASE_HEADERS} from "./constants.js";
 import fetch from "node-fetch";
 import PullRequest from "./PullRequest.js";
@@ -27,6 +27,7 @@ export default class Repository {
     async getPullRequests() {
         const url = `${this.repoBaseUrl}/pulls`;
 
+        console.debug(`Fetching pull requests for ${this.fullName}...`);
         return (await httpCheckParse(await fetch(url, {
             headers: BASE_HEADERS
         })))
@@ -34,14 +35,14 @@ export default class Repository {
     }
 
     static async getAllForOrganisation(organisation) {
-        const url = `${GITHUB_API_BASE_URL}orgs/${organisation}/repos?per_page=100`;
+        const url = `${GITHUB_API_BASE_URL}orgs/${organisation}/repos`;
 
         console.info(`Fetching repositories for organisation=${organisation}...`);
-        const reposResponse = await fetch(url, {
+        const reposResponse = await fetchAllPages(url, {
             headers: BASE_HEADERS
-        }).then(httpCheckParse);
+        });
         const repos = reposResponse.map(repoData => Repository.fromString(repoData.full_name))
-        console.log(`Repositories:\n${repos.map(repo => repo.fullName).map(x => '- ' + x).join('\n')}`)
+        console.log(`Repositories:\n${repos.map(repo => repo.fullName).map(x => '- ' + x).join('\n')}`);
 
         return repos;
     }
