@@ -14,14 +14,18 @@ export default class PullRequest {
         this.draft = checkNotNull(data.draft);
         this.reviewers = checkNotNull(data.requested_reviewers);
         this.reviewerUsernames = this.reviewers.map(reviewer => reviewer.login);
+        this.statusUrl = data.statuses_url;
     }
 
     isOpenForReview() {
         if (this.state != 'open') {
+            console.debug(`Pull request ${this.url} is not open for review because this.state=${this.state}`);
             return false;
         } else if (this.draft) {
+            console.debug(`Pull request ${this.url} is not open for review because this.draft=${this.draft}`);
             return false;
         } else if (this.reviewers.length <= 0) {
+            console.debug(`Pull request ${this.url} is not open for review because this.reviewers=${this.reviewers}`,);
             return false;
         }
 
@@ -30,5 +34,17 @@ export default class PullRequest {
 
     requestsReviewFromOneOfUsers(users) {
         return this.reviewerUsernames.some(reviewer => users.includes(reviewer));
+    }
+
+    async getStatusChecks() {
+        if (!this.statusUrl) {
+            return [];
+        }
+
+        const statusChecks = await fetch(this.statusUrl, {
+            headers: BASE_HEADERS
+        }).then(httpCheckParse);
+
+        return Object.fromEntries(statusChecks.reverse().map(statusCheck => ([statusCheck.context, statusCheck.state === 'success'])));
     }
 }

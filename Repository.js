@@ -7,6 +7,7 @@ export default class Repository {
     constructor(organisation, repoName) {
         this.organisation = checkNotEmpty(organisation);
         this.repoName = checkNotEmpty(repoName);
+        this.fullName = `${organisation}/${repoName}`;
 
         this.repoBaseUrl = `${GITHUB_API_BASE_URL}repos/${this.organisation}/${this.repoName}`;
     }
@@ -30,5 +31,18 @@ export default class Repository {
             headers: BASE_HEADERS
         })))
         .map(prData => new PullRequest(prData));
+    }
+
+    static async getAllForOrganisation(organisation) {
+        const url = `${GITHUB_API_BASE_URL}orgs/${organisation}/repos?per_page=100`;
+
+        console.info(`Fetching repositories for organisation=${organisation}...`);
+        const reposResponse = await fetch(url, {
+            headers: BASE_HEADERS
+        }).then(httpCheckParse);
+        const repos = reposResponse.map(repoData => Repository.fromString(repoData.full_name))
+        console.log(`Repositories:\n${repos.map(repo => repo.fullName).map(x => '- ' + x).join('\n')}`)
+
+        return repos;
     }
 }

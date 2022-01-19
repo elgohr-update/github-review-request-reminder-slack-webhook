@@ -6,7 +6,9 @@ import fetch from "node-fetch";
 import Repository from "./Repository.js";
 import { GITHUB_USERNAMES, SLACK_WEBHOOK_URL, USERNAME_MAPPING } from "./constants.js";
 
-const REPOS = Repository.multipleFromString(process.env.REPOS);
+const REPOS = process.env.REPOS?.startsWith('ALL:')
+    ? await Repository.getAllForOrganisation(process.env.REPOS.substring(4))
+    : Repository.multipleFromString(process.env.REPOS);
 
 const prsAwaitingReview = new Set();
 
@@ -42,14 +44,26 @@ if (prsAwaitingReview.size == 0) {
     process.exit(0);
 }
 
-const message = 'Pull requests are awaiting review\n\n' + [...prsAwaitingReview].map(pr => {
+const message = 'Pull requests are awaiting review\n\n' + (await Promise.all([...prsAwaitingReview].map(async pr => {
     const submitter = getSlackUsername(pr.submitterUsername);
     const reviewers = pr.reviewerUsernames.map(getSlackUsername);
     const title = pr.title;
     const url = pr.url;
+    const statusChecks = await pr.getStatusChecks();
+    const nStatusChecks = Object.keys(statusChecks).length;
+    const nStatusChecksPassed = Object.values(statusChecks).filter(x => x === true).length;
+    const statusChecksMessage = (() => {
+        if (nStatusChecks == 0) {
+            return '';
+        } else if (nStatusChecksPassed >= nStatusChecks) {
+            return ` [:white_check_mark: ${nStatusChecksPassed}/${nStatusChecks} status checks passed]`;
+        }
 
-    return `:pullrequest: "${title}" submitted by ${submitter} requires review from ${reviewers.join(', ')}: ${url}`;
-}).map(x => `- ${x}`).join('\n');
+        return ` [:x: ${nStatusChecksPassed}/${nStatusChecks} status checks passed]`;
+    })();
+
+    return `:pullrequest: "${title}" (by ${submitter}) requires review from ${reviewers.join(', ')}: ${url}${statusChecksMessage}`;
+}))).map(x => `- ${x}`).join('\n');
 
 console.info('Calling Slack webhook...', message);
 console.log(await fetch(SLACK_WEBHOOK_URL, {
