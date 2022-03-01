@@ -13,7 +13,7 @@ export const BASE_HEADERS = {
 export const GITHUB_API_BASE_URL = 'https://api.github.com/';
 export const SLACK_WEBHOOK_URL = checkNotEmpty(process.env.SLACK_WEBHOOK_URL);
 
-export const GITHUB_USERNAME_TO_SLACK_MEMBER_ID_MAP = Object.fromEntries(checkNotEmpty(process.env.USERS)
+export const USERNAME_MAPPING = Object.fromEntries(checkNotEmpty(process.env.USERS)
     .split(',')
     .map(x => x.trim())
     .map(mapping => {
@@ -21,7 +21,7 @@ export const GITHUB_USERNAME_TO_SLACK_MEMBER_ID_MAP = Object.fromEntries(checkNo
             return [mapping, null];
         }
 
-        const [githubUsername, slackMemberID] = mapping.split(':', 2);
-        return [githubUsername, slackMemberID];
+        const [githubUsername, slackUsername] = mapping.split(':', 2);
+        return [githubUsername, slackUsername];
     }));
-export const GITHUB_USERNAMES = Object.keys(GITHUB_USERNAME_TO_SLACK_MEMBER_ID_MAP);
+export const GITHUB_USERNAMES = Object.keys(USERNAME_MAPPING);
