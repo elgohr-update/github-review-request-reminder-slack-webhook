@@ -4,7 +4,7 @@ ConsoleStamp(console);
 import { checkHttpStatus, checkNotEmpty, httpCheckParse, sleep } from "./utils.js";
 import fetch from "node-fetch";
 import Repository from "./Repository.js";
-import { GITHUB_USERNAMES, SLACK_WEBHOOK_URL, USERNAME_MAPPING } from "./constants.js";
+import { GITHUB_USERNAMES, SLACK_WEBHOOK_URL, GITHUB_USERNAME_TO_SLACK_MEMBER_ID_MAP } from "./constants.js";
 
 const REPOS = process.env.REPOS?.startsWith('ALL:')
     ? await Repository.getAllForOrganisation(process.env.REPOS.substring(4))
@@ -32,10 +32,10 @@ for (const repo of REPOS) {
     await sleep(100); // So Github continues to like me
 }
 
-const getSlackUsername = githubUsername => {
-    const slackUsername = USERNAME_MAPPING?.[githubUsername];
-    if (slackUsername) {
-        return `@${slackUsername}`;
+const tryGetSlackMention = githubUsername => {
+    const slackMemberId = GITHUB_USERNAME_TO_SLACK_MEMBER_ID_MAP?.[githubUsername];
+    if (slackMemberId) {
+        return `<@${slackMemberId}>`;
     }
 
     return githubUsername;
@@ -47,8 +47,8 @@ if (prsAwaitingReview.size == 0) {
 }
 
 const message = 'Pull requests are awaiting review\n\n' + (await Promise.all([...prsAwaitingReview].map(async pr => {
-    const submitter = getSlackUsername(pr.submitterUsername);
-    const reviewers = pr.reviewerUsernames.map(getSlackUsername);
+    const submitter = tryGetSlackMention(pr.submitterUsername);
+    const reviewers = pr.reviewerUsernames.map(tryGetSlackMention);
     const title = pr.title;
     const url = pr.url;
     const statusChecks = await pr.getStatusChecks();
